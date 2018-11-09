@@ -1,0 +1,116 @@
+#!/bin/bash
+#
+# check-cis-agi     This shell script takes care of starting and stopping check-cis-agi
+#
+# chkconfig: - 80 20
+#
+### BEGIN INIT INFO
+# Provides: Nguyen Ngoc Tai
+# Required-Start: $network $syslog
+# Required-Stop: $network $syslog
+# Default-Start:
+# Default-Stop:
+# Description: Release implementation for Servlet 2.5 and JSP 2.1
+# Short-Description: start and stop check-cis-agi
+### END INIT INFO
+
+## Source function library.
+#. /etc/rc.d/init.d/functions
+
+RED='\033[0;31m'
+NC='\033[0m'
+GREEN='\033[0;32m'
+
+CURRENT_DIR="/var/lib/check-active-calls-restart-cis-agi"
+
+function check_check_call(){
+
+        ps -ef | grep check-active-calls-restart-cis-agi | grep -v "grep" | grep -v "service-check-active-calls-restart-cis-agi" | awk '{print $2}' | wc -l
+}
+
+function get_process_pid_check_call(){
+
+	ps -ef | grep check-active-calls-restart-cis-agi | grep -v "grep" | grep -v "service-check-active-calls-restart-cis-agi" | awk '{print $2}' | awk '{ORS=(NR%3?FS:RS)}1'
+}
+
+
+function kill_process_pid_check_call(){
+
+value_test=`ps -ef | grep check-active-calls-restart-cis-agi | grep -v "grep" | grep -v "service-check-active-calls-restart-cis-agi" | awk '{print $2}' | awk '{ORS=(NR%3?FS:RS)}1'`
+
+list_pid=(${value_test[@]})
+	
+	for i in "${!list_pid[@]}";
+	do
+		if [ "${list_pid[$i]}" -gt "0" ]
+			then
+			kill -9 ${list_pid[$i]}
+		fi
+	done
+}
+
+function start_check_call(){
+	
+	if [ `check_check_call` -eq 0 ]
+		then
+			echo -e "${RED}Service check active call is not running....................${NC}"
+			"$CURRENT_DIR"/check-active-calls-restart-cis-agi.sh
+			echo -e "${RED}Starting service check active call:                                          [${NC}  ${GREEN}OK${NC}  ${RED}]${NC}"
+	else
+		        echo -e "${RED}Service check call is running....................${NC}"
+			echo -e "${RED}Starting service check active call:                                          [${NC}  ${GREEN}OK${NC}  ${RED}]${NC}"
+	fi
+	
+}
+
+function stop_check_call(){
+	
+	if [ `check_check_call` -eq 0 ];
+                then
+                       echo -e "${RED}Stopping service check active call:                                          [${NC}  ${GREEN}OK${NC}  ${RED}]${NC}"
+                              
+
+        else	
+				sleep 2
+                        echo -e "${RED}Stopping service check active call: waiting for processes${NC} ${GREEN}`get_process_pid_check_call`${NC} ${RED}to exit [${NC} ${GREEN}OK${NC} ${RED}]${NC}"
+				kill_process_pid_check_call		
+        fi
+}
+
+function restart_check_call(){
+	
+	stop_check_call
+	sleep 2
+	start_check_call
+}
+
+function status_check_call(){
+
+	if [ `check_check_call` -eq 0 ];
+                then
+			echo -e "${RED}Service check active call is stopped                                         [${NC} ${GREEN}OK${NC} ${RED}]${NC}"
+
+	else
+			echo -e "${RED}Sercive check active call ${NC}${GREEN}pid `get_process_pid_check_call`${NC}${RED} is running...                          [${NC} ${GREEN}OK${NC} ${RED}]${NC}"
+	fi
+}
+
+case "$1" in
+  start)
+    start_check_call
+    ;;
+  stop)
+    stop_check_call
+    ;;
+  restart)
+    restart_check_call
+    ;;
+  status)
+    status_check_call
+    ;;
+  *)
+    echo "Usage: $0 {start|stop|restart|status}"
+    exit 1
+esac
+
+exit 0
